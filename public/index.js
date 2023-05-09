@@ -65,41 +65,35 @@ async function signIn() {
 }
 
 async function displayShoppingList(email) {
-  // retrieve the shoppingList documents for email and turn them into entries
-  // in an editable Shopping List table
-
-  let userShoppingList = "";
   const userShoppingListsCollection = collection(db, "userShoppingLists");
   const userShoppingListsQuery = query(
     userShoppingListsCollection,
-    where("userEmail", "==", email),
     orderBy("userPurchase", "asc")
   );
   const userShoppingListsSnapshot = await getDocs(userShoppingListsQuery);
 
+  let userShoppingList = "";
   userShoppingListsSnapshot.forEach(function (doc) {
+    if (doc.data().userEmail !== email) {
+      return; // Skip items not belonging to the current user
+    }
+
     userShoppingList +=
-      `
-        <input type='text' maxlength='30' size='20' id='o` +
-      doc.id +
-      `' autocomplete='off'
-            placeholder='` +
-      doc.data().userPurchase +
-      `'
-            value='` +
-      doc.data().userPurchase +
-      `'>
-            <button id =  'e` +
-      doc.id +
-      `'>Update</button>
-            <button id =  'd` +
-      doc.id +
-      `'>Delete</button><br>
-            `;
+      `<div style="border: 1px solid black; background-color: #f2f2f2; padding: 10px; margin-bottom: 10px;">
+        <input type='text' maxlength='30' size='20' id='o${doc.id}' autocomplete='off'
+          placeholder='${doc.data().userPurchase}' value='${doc.data().userPurchase}'>
+        <button id='e${doc.id}'>Update</button>
+        <button id='d${doc.id}'>Delete</button>
+      </div>`;
   });
 
   document.getElementById("usershoppinglist").innerHTML = userShoppingList;
+
   userShoppingListsSnapshot.forEach(function (doc) {
+    if (doc.data().userEmail !== email) {
+      return; // Skip items not belonging to the current user
+    }
+
     document.getElementById("e" + doc.id).onclick = function () {
       updateShoppingListDocument(doc.id);
     };
@@ -108,6 +102,7 @@ async function displayShoppingList(email) {
     };
   });
 }
+
 
 async function updateShoppingListDocument(id) {
   // update the userPurchase field for document id
